@@ -19,31 +19,41 @@ const Group = () => {
   const {group,http} = AuthUser();
   const [personName, setPersonName] = useState([]); 
   const params = useParams();
-  const id = params.id;  
+  const ids = params.id;  
+  const [studentState, setStudentState] = useState([]);
   // const navigate = useNavigate();
   const [student, setStudent] = useState([]); 
   const [user, setUser] = useState([]); 
-  const times = [
-    { user_id: 1, name: "Sanjar" },
-    { user_id: 2, name: "Anvar" }
-  ];
-  const [value, setValue] = useState(() => {
-    return times.map((result) => ({
-      "group": id,
-      date: '21213143',
-      result,
-      isChecked: false
-    }));
-  }); 
+  const [value, setValue] = useState(
+    studentState.map(d => {
+      return {
+        value: false,
+        id: d.user_id,
+        name: d.name
+      };
+    })
+    )
+     
   useEffect(() => {
-    group.get('/get-main/'+ id).then((res)=>{
+    group.get('/get-main/'+ ids).then((res)=>{
       if (res.status === 200) {
         setUser(res.data.data);
+        setStudentState(res.data.data.students);
         setStudent(res.data.data.students);
         let days = res.data.data.day; 
         setPersonName(days.split(','))
       }
     });
+    setStudentState(
+      studentState.map(d => {
+        return {
+          value: false,
+          id: d.user_id,
+          name: d.name
+        };
+      })
+    )
+   
   }, []);   
   const names = [
    {'val': 1, 'title':'Dushanba'},
@@ -55,7 +65,7 @@ const Group = () => {
    {'val': 7, 'title':'Yakshanba'}
 
   ]; 
- 
+
   const style = {
     position: 'absolute',
     top: '50%',
@@ -68,39 +78,15 @@ const Group = () => {
     boxShadow: 24,
     p: 4,
   };
- 
-  const handleToggle = (name) => {
-    setValue((value) => {
-      return value.map(({ result, isChecked }) => ({
-        group_id:id,
-        date: Math.floor(new Date().getTime() / 1000),
-        result,
-        isChecked: name === result.name ? !isChecked : isChecked
-      } 
-      )
-      );
-    }); 
-  };   
-  function handleChange(e,id) {
-    const inputName = e.target.name;
-    const inputValue = e.target.checked;
-    const inputId = e.target.id;
-  //   setValue((prev) => {
-  //     let newState = { ...prev };
-  //     value.result[id].checked = e.target.checked;
-  //     return newState;
-  // });
-    setValue((oldValue) => ({ ...oldValue, [inputName]: inputValue, inputId }));
-  }
 
   function handleSubmit(e) {
-    e.preventDefault(); 
-    console.log(value);
-    // http.post('/nb_post',value).then((res)=>{
-    //   if (res.status === 200) {
-    //     // navigate("/teacher/group");
-    //   }
-    // }).catch((err) => console.log(err));
+    e.preventDefault();  
+    http.post('/nb_post',value).then((res)=>{
+      if (res.status === 200) {
+        console.log(value);
+        // navigate("/teacher/group");
+      }
+    }).catch((err) => console.log(err));
   }
   const [open, setOpen] = React.useState(false);
   const handleOpen = () => setOpen(true);
@@ -151,8 +137,7 @@ const Group = () => {
           type="text"
           name="start_date"
           disabled
-          value={user.start_date || ""}
-          onChange={handleChange}
+          value={user.start_date || ""} 
           className="form-control" 
         />
                 </div>
@@ -167,8 +152,7 @@ const Group = () => {
           type="text"
           name="end_date"
           disabled
-          value={user.end_date || ""}
-          onChange={handleChange}
+          value={user.end_date || ""} 
           className="form-control" 
         />
                 </div>
@@ -198,26 +182,53 @@ const Group = () => {
       <form onSubmit={handleSubmit}>
         <div className="row">
           <div className="col-md-12">
-            <table id="transition-modal-description" className="table table-stripped">
-               <thead>
-                <tr>
-                <th style={{width:"3%"}}>ID</th>
-                <th style={{width:"45%"}}>Name</th>
-                <th style={{width:"1%"}}>MB</th>
-                </tr>
-               </thead>
-               <tbody>
-               {value.map(({ result,isChecked },i) => (
-        <CheckBox
-          key={result.user_id}
-          value={result.name}
-          id={i+1}
-          isChecked={isChecked}
-          handleToggle={handleToggle}
-        />
-      ))}
-               </tbody>
-            </table>
+          <table className="table table-bordered">
+        <thead>
+          <tr>
+            <th scope="col">
+              <input
+                type="checkbox"
+                onChange={e => {
+                  let checked = e.target.checked;
+                  setStudentState(
+                    studentState.map(d => {
+                      d.value = checked;
+                      return d;
+                    })
+                  );
+                }}
+              ></input>
+            </th>
+            <th scope="col">ID</th>  
+            <th scope="col">Name</th>  
+          </tr>
+        </thead>
+        <tbody>
+          {studentState.map((d, i) => (
+            <tr key={i}>
+              <th scope="row">
+                <input
+                  onChange={event => {
+                    let checked = event.target.checked;
+                    setStudentState(
+                      studentState.map(data => {
+                        if (d.user_id === data.user_id) {
+                          data.value = checked;
+                        }
+                        return data;
+                      })
+                    );
+                  }}
+                  type="checkbox"
+                  checked={d.value}
+                ></input>
+              </th>
+              <td>{d.user_id}</td> 
+              <td>{d.name}</td> 
+            </tr>
+          ))}
+        </tbody>
+      </table>
           </div>
         </div>
         <button type="submit" className="btn btn-success">

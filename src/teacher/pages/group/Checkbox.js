@@ -2,13 +2,13 @@ import React from "react";
 
 export default function CheckBox(props) {
   const handleChange = () => {
-    const { value,id, handleToggle } = props;
+    const { id,value,isChecked, handleToggle } = props;
 
-    handleToggle(value,id);
+    handleToggle(id,value,isChecked);
   };
 
   const { value,id, isChecked } = props;
-  // console.log(props);
+  console.log(props);
 
   return (
     <tr>
